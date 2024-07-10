@@ -8,13 +8,15 @@
 //! We then call [`println!`] to display `Hello, world!`.
 
 #![deny(missing_docs)]
-#![deny(warnings)]
+// #![deny(warnings)]
 #![no_std]
 #![no_main]
 #![feature(panic_info_message)]
 
 use core::arch::global_asm;
-use log::*;
+use libafl_qemu_cmd::{self, EndStatus};
+
+const BUFFER_SIZE: usize = 64;
 
 #[macro_use]
 mod console;
@@ -50,27 +52,16 @@ pub fn rust_main() -> ! {
     }
     clear_bss();
     logging::init();
-    println!("[kernel] Hello, world!");
-    trace!(
-        "[kernel] .text [{:#x}, {:#x})",
-        stext as usize,
-        etext as usize
-    );
-    debug!(
-        "[kernel] .rodata [{:#x}, {:#x})",
-        srodata as usize, erodata as usize
-    );
-    info!(
-        "[kernel] .data [{:#x}, {:#x})",
-        sdata as usize, edata as usize
-    );
-    warn!(
-        "[kernel] boot_stack top=bottom={:#x}, lower_bound={:#x}",
-        boot_stack_top as usize, boot_stack_lower_bound as usize
-    );
-    error!("[kernel] .bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
 
-    // CI autotest success: sbi::shutdown(false)
-    // CI autotest failed : sbi::shutdown(true)
-    sbi::shutdown(false)
+    let mut buffer = [0u8; BUFFER_SIZE];
+    let size = libafl_qemu_cmd::start_phys(buffer.as_mut_ptr(), BUFFER_SIZE);
+    if size > 0 && buffer[0] == 'A' as u8 {
+        if size > 1 && buffer[1] == 'B' as u8 {
+            if size > 2 && buffer[2] == 'C' as u8 {
+                println!("Success!");
+                libafl_qemu_cmd::end(EndStatus::Crash);
+            }
+        }
+    }
+    libafl_qemu_cmd::end(EndStatus::Ok);
 }
