@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 log = "0.4"
 sbi-rt = { version = "0.0.2", features = ["legacy"] }
-libafl_qemu_cmd = { path = "/home/patrickli/program/fuzzing/libafl_qemu_cmd", features = ["sync_backdoor"] }
+libafl_qemu_cmd = { git = "https://github.com/nine-point-eight-p/libafl_qemu_cmd", features = ["nightly"] }
 
 [profile.release]
 debug = true
